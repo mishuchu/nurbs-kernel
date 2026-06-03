@@ -141,9 +141,9 @@ curve_integral_cartesian(int p, const KnotVector<T>& U,
     NURBSPoint<T> I_w = curve_integrate(p, U, Pw);
     T w = I_w.w();
     if (w != T{0}) {
-        return nurbs::core::Point<T>(I_w.cart_x(), I_w.cart_y(), I_w.cart_z());
+        return nurbs::core::Point<T, 0>{I_w.cart_x(), I_w.cart_y(), I_w.cart_z()};
     }
-    return nurbs::core::Point<T>(I_w.cart_x(), I_w.cart_y(), I_w.cart_z());
+    return nurbs::core::Point<T, 0>{I_w.cart_x(), I_w.cart_y(), I_w.cart_z()};
 }
 
 } // namespace nurbs::curve
