@@ -62,18 +62,27 @@ TEST_CASE("basis_function: single function evaluation") {
 }
 
 TEST_CASE("bspline_basis: endpoint evaluation") {
-    std::vector<double> kv = {0, 0, 0, 1, 1, 1}; // clamped, p=2
+    // Clamped degree-2 B-spline: n=2, p=2, U={0,0,0,1,1,1}
+    // At u=0: only N_0,2 is non-zero and N_0,2(0) = 1
+    // At u=1: only N_2,2 is non-zero and N_2,2(1) = 1
+    // Using a VALID knot vector matching the relationship m = n + p + 1
+    // n=2, p=2 → m = 2+2+1 = 5 → U has 6 knots
+    std::vector<double> kv = {0, 0, 0, 1, 1, 1}; // clamped, p=2, n=2
     KnotVector<double> U(kv);
 
-    const std::size_t n = 2;
+    const std::size_t n = 2; // n+1 = 3 control points
     const int p = 2;
 
+    // At u=0 (left endpoint of domain [0,1]):
+    // find_span returns k=2 (because u >= U[2]=0, u < U[3]=1)
+    // Basis functions should be [1, 0, 0] (only N_0,2 active)
     auto res = bspline_basis(n, p, 0.0, U);
     CHECK(res.values.size() == static_cast<std::size_t>(p + 1));
-
-    // At u=0, the first basis function should be 1.0
     CHECK(std::abs(res.values[0] - 1.0) < 1e-10);
 
+    // At u=1 (right endpoint of domain):
+    // find_span returns k=4 (special case u >= U[5])
+    // Basis functions should be [0, 0, 1] (only N_2,2 active)
     auto res1 = bspline_basis(n, p, 1.0, U);
     CHECK(std::abs(res1.values[p] - 1.0) < 1e-10);
 }

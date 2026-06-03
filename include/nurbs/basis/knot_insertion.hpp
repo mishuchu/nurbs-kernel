@@ -98,7 +98,7 @@ insert_knot(T u, int p, const KnotVector<T>& U,
     std::size_t L = k - p + 1;
     for (int j = 1; j <= p - s; ++j) {
         T alpha = (u - U[L + j - 1]) / (U[L + p + j - 1] - U[L + j - 1]);
-        Qw_bar[L + j - 1] = (Pw[L + j - 1] - (T{1} - alpha) * Qw_bar[L + j - 2]) / alpha;
+        Qw_bar[L + j - 1] = (Pw[L + j - 1] - Qw_bar[L + j - 2] * (T{1} - alpha)) / alpha;
     }
 
     KnotInsertionResult<T> r;

@@ -1,4 +1,10 @@
 // nurbs_curve.hpp — NURBS curve class (The NURBS Book, Ch5)
+// Algorithm A5.1: NURBS curve construction
+// Algorithm A5.2: curve derivatives (see curve_derivatives.hpp)
+// Algorithm A5.3: degree elevation (see curve_degree_elevation.hpp)
+// Algorithm A5.4: knot insertion (see curve_knot_insertion.hpp)
+// Algorithm A5.5: curve integration (see curve_integrate.hpp)
+// Algorithm A5.6: curve inversion (see curve_inversion.hpp)
 #pragma once
 
 #include <algorithm>
@@ -102,6 +108,12 @@ public:
         if (u < u_min) u = u_min;
         if (u > u_max) u = u_max;
 
+        // Right-endpoint special case: when u reaches the last knot value
+        // (which equals U.back() for clamped curves), the homogeneous De Boor
+        // would divide by zero because right[j] = U[k+j] - u = 0.
+        // The curve endpoint is simply the last Cartesian control point.
+        if (u == u_max) return Pw_[n_];
+
         // Find span and compute basis functions
         std::size_t k = find_span(n, p_, u, U_);
         std::vector<T> b(p_ + 1);
@@ -122,7 +134,16 @@ public:
             }
         }
 
-        return temp[0];
+        // Dehomogenize: convert homogeneous (xw, yw, zw, w) back to Cartesian point
+        // The De Boor result temp[0] has w = accumulated weight from blending
+        NURBSPoint<T> result = temp[0];
+        T w = result.w();
+        if (w != T{0}) {
+            return NURBSPoint<T>(result.x() / w, result.y() / w,
+                                 result.z() / w, T{1});
+        }
+        // Fallback: w=0 means pure affine (no rational effect); treat as Cartesian
+        return result;
     }
 
     /**

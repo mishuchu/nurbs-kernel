@@ -31,7 +31,10 @@ template <NumericScalar_ T>
 std::size_t find_span(std::size_t n, int p, T u, const KnotVector<T>& U) {
     const std::size_t m = U.size() - 1;  // m = n + p + 1
 
+    // Special boundary: at or past the last knot → last span
     if (u >= U[m]) return n;
+    // Left boundary: at or before first interior knot span → first span
+    if (u <= U[p]) return p;
 
     std::size_t low  = p;
     std::size_t high = m - p - 1;  // = n
@@ -92,11 +95,21 @@ std::size_t compute_basis_functions(std::size_t n, int p, T u,
         saved    = T{0};
 
         for (int r = 0; r < j; ++r) {
-            temp      = b[r] / (right[r + 1] + left[j - r]);
-            b[r]      = saved + right[r + 1] * temp;
-            saved     = left[j - r] * temp;
+            T denom = right[r + 1] + left[j - r];
+            if (denom == T{0}) {
+                b[r] = T{0};
+                saved = T{0};
+            } else {
+                temp      = b[r] / denom;
+                b[r]      = saved + right[r + 1] * temp;
+                saved     = left[j - r] * temp;
+            }
         }
-        b[j] = saved;
+        if (j > 0 && (right[j] + left[0]) == T{0}) {
+            b[j] = T{0};
+        } else {
+            b[j] = saved;
+        }
     }
 
     return k;

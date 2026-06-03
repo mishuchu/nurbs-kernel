@@ -1,0 +1,26 @@
+# Build artifacts
+build/
+a.out
+*.o
+*.a
+
+# Third party (vendored catch2 - tracked)
+# 3rdparty/ is tracked
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# CMake
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+CTestTestfile.cmake
+DartConfiguration.tcl

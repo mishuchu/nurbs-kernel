@@ -1,5 +1,6 @@
 // bspline_basis.hpp — B-spline basis function evaluation (The NURBS Book, Ch4)
 // Algorithm A3.1: evaluate p+1 non-zero basis functions at parameter u
+// Algorithm A4.1: knot removal (see knot_removal.hpp)
 #pragma once
 
 #include <algorithm>
