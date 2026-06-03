@@ -64,6 +64,7 @@ if(BUILD_TESTING)
         test/test_main.cpp
         test/test_bspline_basis.cpp
         test/test_nurbs_curve.cpp
+        test/test_surface.cpp
     )
     target_link_libraries(tests PRIVATE Catch2::Catch2 nurbs-kernel)
     target_compile_options(tests PRIVATE -Wall -Wextra -std=c++20)
