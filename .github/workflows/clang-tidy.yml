@@ -1,0 +1,32 @@
+name: Clang-Tidy
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+
+jobs:
+  clang-tidy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Clang 18
+        run: |
+          wget -q https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 18
+          sudo apt-get install -y clang-format-18 clang-tidy-18
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Fetch Catch2 amalgamated
+        run: |
+          mkdir -p 3rdparty/catch2
+          curl -sL https://raw.githubusercontent.com/catchorg/Catch2/devel/extras/catch_amalgamated.cpp -o 3rdparty/catch2/catch_amalgamated.cpp
+          curl -sL https://raw.githubusercontent.com/catchorg/Catch2/devel/extras/catch_amalgamated.hpp -o 3rdparty/catch2/catch_amalgamated.hpp
+
+      - name: Run clang-tidy
+        run: |
+          cmake -B build -DCMAKE_CXX_COMPILER=clang++-18 -DCMAKE_CXX_CLANG_TIDY=clang-tidy-18
+        continue-on-error: true

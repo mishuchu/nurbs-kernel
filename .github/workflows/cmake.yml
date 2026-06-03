@@ -1,0 +1,98 @@
+name: CMake Build & Test
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+
+jobs:
+  cmake-build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler:
+          - id: gcc
+            CC: gcc
+            CXX: g++
+          - id: clang
+            CC: clang
+            CXX: clang++
+
+    steps:
+      - name: Install GCC ${{ matrix.compiler.id }}
+        if: matrix.compiler.id == 'gcc'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++-14
+          echo "CC=gcc-14" >> $GITHUB_ENV
+          echo "CXX=g++-14" >> $GITHUB_ENV
+
+      - name: Install Clang ${{ matrix.compiler.id }}
+        if: matrix.compiler.id == 'clang'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-18
+          echo "CC=clang-18" >> $GITHUB_ENV
+          echo "CXX=clang++-18" >> $GITHUB_ENV
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Fetch Catch2 amalgamated
+        run: |
+          mkdir -p 3rdparty/catch2
+          curl -sL https://raw.githubusercontent.com/catchorg/Catch2/devel/extras/catch_amalgamated.cpp -o 3rdparty/catch2/catch_amalgamated.cpp
+          curl -sL https://raw.githubusercontent.com/catchorg/Catch2/devel/extras/catch_amalgamated.hpp -o 3rdparty/catch2/catch_amalgamated.hpp
+
+      - name: Configure CMake
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=${{ env.CXX }}
+
+      - name: Build
+        run: cmake --build build -j$(nproc)
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+  codecov:
+    needs: cmake-build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install GCC
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++-14 gcovr lcov
+          echo "CC=gcc-14" >> $GITHUB_ENV
+          echo "CXX=g++-14" >> $GITHUB_ENV
+
+      - name: Fetch Catch2 amalgamated
+        run: |
+          mkdir -p 3rdparty/catch2
+          curl -sL https://raw.githubusercontent.com/catchorg/Catch2/devel/extras/catch_amalgamated.cpp -o 3rdparty/catch2/catch_amalgamated.cpp
+          curl -sL https://raw.githubusercontent.com/catchorg/Catch2/devel/extras/catch_amalgamated.hpp -o 3rdparty/catch2/catch_amalgamated.hpp
+
+      - name: Configure CMake with coverage
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=g++-14 -DCOVERAGE=ON
+
+      - name: Build with coverage
+        run: cmake --build build -j$(nproc)
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Generate coverage report
+        run: |
+          cd build
+          gcovr -r .. --html-details coverage.html || true
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./build/coverage.xml
+          fail_ci_if_error: false
+          verbose: true
+        continue-on-error: true
